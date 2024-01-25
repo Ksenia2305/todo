@@ -6,6 +6,7 @@ plugins {
 }
 
 val allureVersion = "2.24.0"
+val kotestVersion = "5.8.0"
 
 group = "org.example"
 version = "1.0-SNAPSHOT"
@@ -21,7 +22,9 @@ dependencies {
     testImplementation(platform("io.qameta.allure:allure-bom:$allureVersion"))
     // Add necessary Allure dependencies to dependencies section
     testImplementation("io.qameta.allure:allure-junit5")
-
+    testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
+    testImplementation ("io.kotest:kotest-assertions-core:$kotestVersion")
+    testImplementation ("io.kotest:kotest-property:$kotestVersion")
 }
 
 tasks.test {

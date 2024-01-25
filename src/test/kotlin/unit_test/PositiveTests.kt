@@ -4,16 +4,21 @@ import data.Priority.HIGH
 import data.Priority.LOW
 import data.Priority.MEDIUM
 import data.TasksRepositoryMemory
+import extension_test_class.RepeatOnFailureExtension
 import generateTask
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.core.spec.style.ShouldSpec
 import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
 
 
-class PositiveTests {
+class PositiveTests: FunSpec({
+    extension(RepeatOnFailureExtension())
+
     val tasksRepositoryMemory = TasksRepositoryMemory()
 
-    @Test
-    fun `Add, complete and get one task test`() {
+
+    test("Add, complete and get one task test") {
         val idTaskHigh = tasksRepositoryMemory.addTask(generateTask(HIGH))
         tasksRepositoryMemory.completeTask(idTaskHigh)
         assertEquals(1, tasksRepositoryMemory.getTasks(completed = true).size)
@@ -21,8 +26,8 @@ class PositiveTests {
         assertEquals(0, tasksRepositoryMemory.getTasks(completed = false).size)
     }
 
-    @Test
-    fun `Add, complete and get three task test, check sort`() {
+
+    test("Add, complete and get three task test, check sort") {
         val tasks =
             listOf(
                 generateTask(HIGH),
@@ -42,4 +47,4 @@ class PositiveTests {
         assertEquals(tasks, tasksRepositoryMemory.getTasks(completed = true))
 
     }
-}
+})
