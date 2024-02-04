@@ -1,36 +1,37 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+val allureVersion = "2.24.0"
+val aspectJVersion = "1.9.20.1"
 
 plugins {
-    kotlin("jvm") version "1.7.20"
+    kotlin("jvm") version "1.9.21"
+    id("net.serenity-bdd.serenity-gradle-plugin") version "4.0.30"
+    id("io.qameta.allure") version "2.11.2"
+    id("org.jlleitschuh.gradle.ktlint") version "12.0.3"
     application
-}
+    checkstyle
 
-val allureVersion = "2.24.0"
-val kotestVersion = "5.8.0"
+}
 
 group = "org.example"
 version = "1.0-SNAPSHOT"
-
 repositories {
     mavenCentral()
 }
-
 dependencies {
     testImplementation(kotlin("test"))
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.7.20")
-    // Import allure-bom to ensure correct versions of all the dependencies are used
     testImplementation(platform("io.qameta.allure:allure-bom:$allureVersion"))
-    // Add necessary Allure dependencies to dependencies section
     testImplementation("io.qameta.allure:allure-junit5")
-    testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
-    testImplementation ("io.kotest:kotest-assertions-core:$kotestVersion")
-    testImplementation ("io.kotest:kotest-property:$kotestVersion")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.8.2")
+    testImplementation("net.serenity-bdd:serenity-core:4.0.28")
+    testImplementation("net.serenity-bdd:serenity-junit5:4.0.28")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
+    testImplementation("org.junit.platform:junit-platform-suite:1.8.1")
 }
 
 tasks.test {
     useJUnitPlatform()
 }
-
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
 }

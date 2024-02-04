@@ -1,50 +1,79 @@
 package unit_test
-
-import data.Priority.HIGH
-import data.Priority.LOW
-import data.Priority.MEDIUM
-import data.TasksRepositoryMemory
-import extension_test_class.RepeatOnFailureExtension
-import generateTask
-import io.kotest.core.spec.style.FunSpec
-import io.kotest.core.spec.style.ShouldSpec
-import kotlin.test.assertEquals
+import TestDataRepository
+import data.Task
+import java.util.stream.Stream
+import net.serenitybdd.annotations.Steps
+import net.serenitybdd.junit5.SerenityJUnit5Extension
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
+import serenity.TasksRepositoryMemorySteps
 
 
-class PositiveTests: FunSpec({
-    extension(RepeatOnFailureExtension())
-
-    val tasksRepositoryMemory = TasksRepositoryMemory()
-
-
-    test("Add, complete and get one task test") {
-        val idTaskHigh = tasksRepositoryMemory.addTask(generateTask(HIGH))
-        tasksRepositoryMemory.completeTask(idTaskHigh)
-        assertEquals(1, tasksRepositoryMemory.getTasks(completed = true).size)
-        assertEquals(1, tasksRepositoryMemory.tasks.size)
-        assertEquals(0, tasksRepositoryMemory.getTasks(completed = false).size)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@ExtendWith(SerenityJUnit5Extension::class)
+class TasksRepositoryMemoryTests {
+    @AfterEach
+    fun cleanRepository() {
+        repository.clearRepository()
     }
 
+    private val testDataRepository = TestDataRepository()
 
-    test("Add, complete and get three task test, check sort") {
-        val tasks =
-            listOf(
-                generateTask(HIGH),
-                generateTask(LOW),
-                generateTask(MEDIUM)
-            )
-        val idTaskHigh = tasksRepositoryMemory.addTask(tasks[0])
-        val idTaskLow = tasksRepositoryMemory.addTask(tasks[1])
-        val idTaskMedium = tasksRepositoryMemory.addTask(tasks[2])
-
-        tasksRepositoryMemory.completeTask(idTaskHigh)
-        tasksRepositoryMemory.completeTask(idTaskLow)
-        tasksRepositoryMemory.completeTask(idTaskMedium)
-        assertEquals(3, tasksRepositoryMemory.getTasks(completed = true).size)
-        assertEquals(3, tasksRepositoryMemory.tasks.size)
-        assertEquals(0, tasksRepositoryMemory.getTasks(completed = false).size)
-        assertEquals(tasks, tasksRepositoryMemory.getTasks(completed = true))
-
+    private fun getStreamOfTestTasks(): Stream<Task> {
+        return testDataRepository.testTasks.stream()
     }
-})
+
+    @Steps
+    lateinit var repository: TasksRepositoryMemorySteps
+
+    @ParameterizedTest
+    @MethodSource("getStreamOfTestTasks")
+    fun addTask(task: Task) {
+        val addedTask: Task = repository.addTask(task)
+        repository.checkIfTaskInRepository(addedTask)
+    }
+
+    @Test
+    fun checkFilterOfTasksIncludingCompleted() {
+        val tasks: List<Task> = getStreamOfTestTasks().toList()
+
+        val tasksAfterAdding = repository.addGroupOfTasks(tasks)
+        val indexOfCompletedTask = repository.completeRandomTask(tasksAfterAdding)
+        val completedTask = tasksAfterAdding[indexOfCompletedTask]
+        repository.checkFilterOfTasksIncludingCompleted(completedTask)
+    }
+
+    @Test
+    fun checkFilterOfTasksExcludingCompleted() {
+        val tasks: List<Task> = getStreamOfTestTasks().toList()
+
+        val tasksAfterAdding = repository.addGroupOfTasks(tasks)
+        val indexOfCompletedTask = repository.completeRandomTask(tasksAfterAdding)
+        val completedTask = tasksAfterAdding[indexOfCompletedTask]
+        repository.checkFilterOfTasksExcludingCompleted(completedTask)
+    }
+
+    @Test
+    fun deleteTaskFromRepository() {
+        val tasks: List<Task> = getStreamOfTestTasks().toList()
+        val tasksAfterAdding = repository.addGroupOfTasks(tasks)
+        val indexOfDeletedTask = repository.deleteTask(tasksAfterAdding)
+        val deletedTask = tasksAfterAdding[indexOfDeletedTask]
+        repository.checkIfDeletedTaskNotInRepository(deletedTask)
+    }
+
+    @Test
+    fun uncompleteTask() {
+        val tasks: List<Task> = getStreamOfTestTasks().toList()
+
+        val tasksAfterAdding = repository.addGroupOfTasks(tasks)
+        val indexOfCompletedTask = repository.completeRandomTask(tasksAfterAdding)
+        val uncompletedTask = tasksAfterAdding[indexOfCompletedTask]
+        repository.uncompleteTask(indexOfCompletedTask)
+        repository.checkIfTaskUncompleted(uncompletedTask)
+    }
+}
